@@ -44,7 +44,9 @@ Undear unzips into the A3 directory that holds the scripts.
 
 ## References
 Documentation for modules used:
+
 file::find::duplicates:
 http://search.cpan.org/~tmtm/File-Find-Duplicates-1.00/lib/File/Find/Duplicates.pm
+
 file::DirSync
 http://search.cpan.org/~bbb/File-DirSync-1.12/lib/File/DirSync.pm
