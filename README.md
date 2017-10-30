@@ -1,7 +1,10 @@
 # Deduping
 Bundles files together and compresses them, allowing for different functionality when duplicates are detected: 
+
 •-d: delete duplicate files
+
 •-l: unarchive duplicate files as soft links to the original (usingln -s)
+
 •-c: unarchive duplicate files as copies of the origina
 
 ## install File::Find::Duplicates & File::DirSync
@@ -19,13 +22,19 @@ e.g: ./dear -g outFile inFolder
 e.g: ./undear -d outFile.tar.gz
 
 The options that dear supports are:
+
 •-g: compress result with gzip
+
 •-b: compress result with bzip2
+
 •-c: compress result with compress
 
 The options that undear supports are:
+
 •-d: delete duplicate files
+
 •-l: unarchive duplicate files as soft links to the original (usingln -s)
+
 •-c: unarchive duplicate files as copies of the original
 
 ## Assumptions
