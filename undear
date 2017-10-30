@@ -1,0 +1,112 @@
+#
+#!/bin/sh
+dflag=''
+lflag=''
+cflag=''
+
+# Extracts the file depending on the extension
+function extract() {
+  if [ -f $1 ]; then
+      case "$1" in
+        *.tar.bz2)  tar xvjf $1 ;;
+        *.tar.gz)   tar xvzf $1 ;;
+        *.tar.Z)    uncompress $1 ;;
+        *.tar)      tar xvf $1 ;;
+        *)          echo "$1 cannot be uncompressed due to file type"
+                    exit;;
+      esac
+  else
+    echo "$1 does not exist"
+    exit
+  fi
+}
+
+# returns the basename of the ziped file
+function baseName() {
+  # Get the basename because that's the name of the folder
+  case "$1" in
+    *.tar.bz2)  fbname=$(basename "$1" .tar.bz2) ;;
+    *.tar.gz)   fbname=$(basename "$1" .tar.gz) ;;
+    *.tar.Z)    fbname=$(basename "$1" .tar.Z) ;;
+    *.tar)      fbname=$(basename "$1" .tar) ;;
+    *)          echo "$1 cannot be uncompressed due to file type"
+                exit;;
+  esac
+
+  echo $fbname
+}
+
+# checks if duplicates.txt file exists
+function duplicateExists() {
+  # Can't find the duplicates file so we don't need to do anything
+  if [ ! -f duplicates.txt ]; then
+      echo "No duplicate text file detected"
+      exit
+  fi
+}
+
+# creates a softlink to original where duplicates would be
+# must pass it the file being unzipped
+function linkOrCopyDuplicates() {
+  # change into the extracted folder
+  fbname=$(baseName $1);
+  cd $fbname;
+  # check for the duplicate text file
+  duplicateExists
+
+  # in the text file duplicates are seperated as
+  # ORIGINAL: The file we keep
+  # DUPLICATES: The duplicated files we discarded
+  originalCheck="ORIGINAL:"
+  duplicatesCheck="DUPLICATE(S):"
+  checker=0;
+
+  # Read in file line by line and make symbolic links to copies
+  while IFS='' read -r line || [[ -n "$line" ]]; do
+    # Save the original path to original
+    if [ $checker = 1 ]; then
+      original=$line
+      checker=0
+    fi
+    # Create a link at directory with basename of duplicate
+    if [ $checker = 2 ] && [ "$line" != "$originalCheck" ]; then
+      duplicate=$line
+      duplicateBase=$(basename "$line")
+      duplicatePath=$(dirname "$line")
+      # the links contain the base directory so we need to
+      # retreat one file back when creating them
+      cd ..
+      if [ $2 == "-l"]; then
+        ln -s $original $duplicate
+      else
+        cp $original $duplicatePath
+      fi
+      cd $fbname
+    fi
+
+    # ORIGINAL: detected, next line to get original
+    if [ "$line" == "$originalCheck" ]; then
+      checker=1
+    fi
+    # DUPLICATE(S): detected, next line(s) to get duplicates
+    if [ "$line" == "$duplicatesCheck" ]; then
+      checker=2
+    fi
+  done < duplicates.txt
+}
+
+# Checks flags and runs appropriate functions
+while getopts 'dlc' flag; do
+  case "${flag}" in
+    d) extract $2
+       exit ;;
+    l) extract $2
+       linkOrCopyDuplicates $2 $1
+       exit ;;
+    c) extract $2
+       linkOrCopyDuplicates $2 $1
+       exit ;;
+    *) error "Unexpected option ${flag}"
+       exit ;;
+  esac
+done

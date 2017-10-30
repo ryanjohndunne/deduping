@@ -1,0 +1,44 @@
+#
+#!/bin/sh
+gflag=''
+bflag=''
+cflag=''
+
+while getopts 'gbc' flag; do
+  case "${flag}" in
+    # Check for -g to gzip, return 0 = successful return
+    g) perl deduping.pl $1 $2 $3
+       if [ $? -eq 0 ]
+       then
+         perl -e 'exit 0';
+         tar -zcvf $2.tar.gz $2
+       fi
+       exit ;;
+    # Check for -b to bzip, return 0 = successful return
+    b) perl deduping.pl $1 $2 $3
+       if [ $? -eq 0 ]
+       then
+         tar -cjvf $2.tar.bz2 $2
+       fi
+       exit ;;
+    # Check for -c to compress, return 0 = successful return
+    c) perl deduping.pl $1 $2 $3
+       if [ $? -eq 0 ]
+       then
+         tar -cvf $2.tar $2
+         compress $2.tar
+       fi
+       exit ;;
+    *) error "Unexpected option ${flag}"
+       exit ;;
+  esac
+done
+
+# no flag passed so just tar it, return 0 = succesful return
+if [ $? -eq 0 ]
+then
+  perl deduping.pl $0 $1 $2
+  tar -cvf $1.tar $1
+fi
+
+exit
